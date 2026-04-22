@@ -1,12 +1,8 @@
 const { Pool } = require('pg');
 
+// Usamos connectionString para que lea la URL larga directamente
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 5432,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  // ⚠️ ESTO ES OBLIGATORIO PARA LA NUBE
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false 
   }
@@ -14,11 +10,11 @@ const pool = new Pool({
 
 const initDB = async () => {
   try {
-    const res = await pool.query('SELECT NOW()');
-    console.log('✅ Conectado a Supabase correctamente');
+    await pool.query('SELECT NOW()');
+    console.log('✅ Conectado a Supabase con DATABASE_URL');
     return true;
   } catch (err) {
-    console.error('❌ Error de conexión a la BD:', err.message);
+    console.error('❌ Error de conexión:', err.message);
     throw err;
   }
 };
