@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { initDB } = require('./config/database'); // Asegúrate de que la ruta sea correcta
+const { initDB } = require('./config/database');
 
-// ── Rutas ─────────────────────────────────────────────────────
+// ── Importar rutas ────────────────────────────────────────────
 const authRoutes         = require('./routes/auth.routes');
 const usersRoutes        = require('./routes/users.routes');
 const petsRoutes         = require('./routes/pets.routes');
@@ -13,7 +13,7 @@ const routinesRoutes     = require('./routes/routines.routes');
 
 const app = express();
 
-// ── Middlewares globales ──────────────────────────────────────
+// ── Configuración de CORS ─────────────────────────────────────
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',');
 
 app.use(cors({
@@ -31,17 +31,6 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 
-// ── Manejo explícito de preflight OPTIONS ─────────────────────
-app.options('*', (req, res) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.sendStatus(200);
-});
-
 // ── Rutas de la API ───────────────────────────────────────────
 app.use('/api/auth',           authRoutes);
 app.use('/api/users',          usersRoutes);
@@ -51,9 +40,14 @@ app.use('/api/health-records', healthRoutes);
 app.use('/api/routines',       routinesRoutes);
 
 // ── Health check ──────────────────────────────────────────────
-app.get('/api/health', (_, res) =>
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
-);
+app.get('/api/health', async (_, res) => {
+  try {
+    await initDB();
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(503).json({ status: 'error', message: 'DB no disponible', error: err.message });
+  }
+});
 
 // ── 404 y Error Handler ───────────────────────────────────────
 app.use((_, res) => res.status(404).json({ message: 'Ruta no encontrada' }));
@@ -64,7 +58,7 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Lógica de Arranque (Local vs Vercel) ───────────────────────
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 3001;
   initDB()
     .then(() => {
@@ -76,6 +70,7 @@ if (process.env.NODE_ENV !== 'production') {
       console.error('Error inicializando base de datos:', err);
     });
 } else {
+  // En Vercel no se usa app.listen, solo inicializamos la DB
   initDB().catch(err => console.error('DB Error en Vercel:', err));
 }
 
