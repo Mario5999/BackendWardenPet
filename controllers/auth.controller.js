@@ -29,6 +29,9 @@ const register = async (req, res) => {
     );
 
     const user = rows[0];
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET no está configurado en variables de entorno');
+    }
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     });
@@ -68,6 +71,9 @@ const login = async (req, res) => {
     // Actualizar último login
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
 
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET no está configurado en variables de entorno');
+    }
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     });
