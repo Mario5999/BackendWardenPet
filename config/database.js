@@ -2,14 +2,25 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  port: process.env.DB_PORT || 5432,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  // ── ESTO ES LO QUE FALTA ─────────────────────────────────────
+  // ⚠️ ESTO ES OBLIGATORIO PARA LA NUBE
   ssl: {
-    rejectUnauthorized: false // Esto permite la conexión con certificados de Supabase
+    rejectUnauthorized: false 
   }
 });
 
-module.exports = pool;
+const initDB = async () => {
+  try {
+    const res = await pool.query('SELECT NOW()');
+    console.log('✅ Conectado a Supabase correctamente');
+    return true;
+  } catch (err) {
+    console.error('❌ Error de conexión a la BD:', err.message);
+    throw err;
+  }
+};
+
+module.exports = { pool, initDB };
