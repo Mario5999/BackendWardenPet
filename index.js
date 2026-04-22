@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const initDB = require('./config/initDB');
+const { initDB } = require('./config/database'); // Asegúrate de que la ruta sea correcta
 
 // ── Rutas ─────────────────────────────────────────────────────
 const authRoutes         = require('./routes/auth.routes');
@@ -15,6 +15,7 @@ const app = express();
 
 // ── Middlewares globales ──────────────────────────────────────
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',');
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -27,7 +28,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' })); // 10 MB para imágenes en base64
+
+app.use(express.json({ limit: '10mb' })); 
 
 // ── Rutas de la API ───────────────────────────────────────────
 app.use('/api/auth',           authRoutes);
@@ -42,34 +44,32 @@ app.get('/api/health', (_, res) =>
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 );
 
-// ── 404 ───────────────────────────────────────────────────────
+// ── 404 y Error Handler ───────────────────────────────────────
 app.use((_, res) => res.status(404).json({ message: 'Ruta no encontrada' }));
 
-// ── Error handler global ──────────────────────────────────────
 app.use((err, _req, res, _next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ message: 'Error interno del servidor' });
 });
 
-// ── Arrancar servidor ─────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
-
-initDB()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-      console.log(`📋 Endpoints disponibles:`);
-      console.log(`   POST   /api/auth/register`);
-      console.log(`   POST   /api/auth/login`);
-      console.log(`   GET    /api/auth/me`);
-      console.log(`   GET    /api/users          (admin)`);
-      console.log(`   GET    /api/pets`);
-      console.log(`   GET    /api/reminders`);
-      console.log(`   GET    /api/health-records`);
-      console.log(`   GET    /api/routines`);
+// ── Lógica de Arranque (Local vs Vercel) ───────────────────────
+if (process.env.NODE_ENV !== 'production') {
+  // En local inicializamos la DB y prendemos el server
+  const PORT = process.env.PORT || 3001;
+  initDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Error inicializando base de datos:', err);
     });
-  })
-  .catch((err) => {
-    console.error('No se pudo inicializar la base de datos:', err);
-    process.exit(1);
-  });
+} else {
+  // En producción (Vercel), solo inicializamos la conexión a la DB
+  // Vercel llamará a la app automáticamente
+  initDB().catch(err => console.error('DB Error en Vercel:', err));
+}
+
+// SIEMPRE AL FINAL
+module.exports = app;

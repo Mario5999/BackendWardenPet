@@ -1,25 +1,21 @@
-// ════════════════════════════════════════════════════════════════
-// database.js - Configuración de conexión a PostgreSQL
-// ════════════════════════════════════════════════════════════════
-
 const { Pool } = require('pg');
-require('dotenv').config();
 
+// Supabase usa SSL, por eso añadimos el objeto ssl
 const pool = new Pool({
-  user: process.env.DB_USER || 'wardenpet_user',
-  password: process.env.DB_PASSWORD || 'wardenpet_secure_pass',
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'wardenpet_db',
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Requerido para Supabase/Vercel
+  }
 });
 
-pool.on('error', (err) => {
-  console.error('❌ Error inesperado en el pool de conexiones:', err);
-});
+const initDB = async () => {
+  try {
+    const res = await pool.query('SELECT NOW()');
+    console.log('✅ Conectado a Supabase:', res.rows[0].now);
+  } catch (err) {
+    console.error('❌ Error conectando a la DB:', err);
+    throw err;
+  }
+};
 
-pool.on('connect', () => {
-  console.log('✅ Conectado a PostgreSQL');
-});
-
-module.exports = pool;
+module.exports = { pool, initDB };
