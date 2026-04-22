@@ -24,12 +24,20 @@ app.use(cors({
       callback(new Error('CORS no permitido'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
 
-app.use(express.json({ limit: '10mb' })); 
+app.use(express.json({ limit: '10mb' }));
+
+// ── Manejo explícito de preflight OPTIONS ─────────────────────
+app.options('*', (req, res) => {
+  res.header("Access-Control-Allow-Origin", allowedOrigins[0]); 
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.sendStatus(200);
+});
 
 // ── Rutas de la API ───────────────────────────────────────────
 app.use('/api/auth',           authRoutes);
@@ -54,7 +62,6 @@ app.use((err, _req, res, _next) => {
 
 // ── Lógica de Arranque (Local vs Vercel) ───────────────────────
 if (process.env.NODE_ENV !== 'production') {
-  // En local inicializamos la DB y prendemos el server
   const PORT = process.env.PORT || 3001;
   initDB()
     .then(() => {
@@ -66,10 +73,7 @@ if (process.env.NODE_ENV !== 'production') {
       console.error('Error inicializando base de datos:', err);
     });
 } else {
-  // En producción (Vercel), solo inicializamos la conexión a la DB
-  // Vercel llamará a la app automáticamente
   initDB().catch(err => console.error('DB Error en Vercel:', err));
 }
 
-// SIEMPRE AL FINAL
 module.exports = app;
