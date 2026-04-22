@@ -3,12 +3,12 @@ const express = require('express');
 const { initDB } = require('./config/database');
 
 // ── Importar rutas ────────────────────────────────────────────
-const authRoutes      = require('./routes/auth.routes');
-const usersRoutes     = require('./routes/users.routes');
-const petsRoutes      = require('./routes/pets.routes');
+const authRoutes = require('./routes/auth.routes');
+const usersRoutes = require('./routes/users.routes');
+const petsRoutes = require('./routes/pets.routes');
 const remindersRoutes = require('./routes/reminders.routes');
-const healthRoutes    = require('./routes/healthRecords.routes');
-const routinesRoutes  = require('./routes/routines.routes');
+const healthRoutes = require('./routes/healthRecords.routes');
+const routinesRoutes = require('./routes/routines.routes');
 
 const app = express();
 
@@ -39,12 +39,21 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 
 // ── Rutas de la API ───────────────────────────────────────────
-app.use('/api/auth',           authRoutes);
-app.use('/api/users',          usersRoutes);
-app.use('/api/pets',           petsRoutes);
-app.use('/api/reminders',      remindersRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/pets', petsRoutes);
+app.use('/api/reminders', remindersRoutes);
 app.use('/api/health-records', healthRoutes);
-app.use('/api/routines',       routinesRoutes);
+app.use('/api/routines', routinesRoutes);
+
+// ── Root ──────────────────────────────────────────────────────
+app.get('/', (_, res) => {
+  res.json({
+    message: '🐾 WardenPet Backend funcionando correctamente',
+    status: 'ok',
+    version: '1.0.0',
+  });
+});
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', async (_, res) => {
