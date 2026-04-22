@@ -1,33 +1,40 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const { initDB } = require('./config/database');
 
 // ── Importar rutas ────────────────────────────────────────────
-const authRoutes         = require('./routes/auth.routes');
-const usersRoutes        = require('./routes/users.routes');
-const petsRoutes         = require('./routes/pets.routes');
-const remindersRoutes    = require('./routes/reminders.routes');
-const healthRoutes       = require('./routes/healthRecords.routes');
-const routinesRoutes     = require('./routes/routines.routes');
+const authRoutes      = require('./routes/auth.routes');
+const usersRoutes     = require('./routes/users.routes');
+const petsRoutes      = require('./routes/pets.routes');
+const remindersRoutes = require('./routes/reminders.routes');
+const healthRoutes    = require('./routes/healthRecords.routes');
+const routinesRoutes  = require('./routes/routines.routes');
 
 const app = express();
 
-// ── Configuración de CORS ─────────────────────────────────────
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',');
+// ── CORS manual (compatible con Vercel) ───────────────────────
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    'https://frontend-warden-pet.vercel.app',
+    'http://localhost:3000',
+  ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS no permitido'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // Responder preflight inmediatamente
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -57,7 +64,7 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ message: 'Error interno del servidor' });
 });
 
-// ── Lógica de Arranque (Local vs Vercel) ───────────────────────
+// ── Lógica de Arranque (Local vs Vercel) ──────────────────────
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 3001;
   initDB()
@@ -70,7 +77,6 @@ if (!process.env.VERCEL) {
       console.error('Error inicializando base de datos:', err);
     });
 } else {
-  // En Vercel no se usa app.listen, solo inicializamos la DB
   initDB().catch(err => console.error('DB Error en Vercel:', err));
 }
 
