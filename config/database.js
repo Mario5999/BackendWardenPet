@@ -1,9 +1,9 @@
 const { Pool } = require('pg');
 
-// Usamos connectionString para que lea la URL larga directamente
+// Configuración robusta para Render y otros entornos
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
+  ssl: process.env.DB_NO_SSL === 'true' ? false : {
     rejectUnauthorized: false 
   }
 });
@@ -11,10 +11,10 @@ const pool = new Pool({
 const initDB = async () => {
   try {
     await pool.query('SELECT NOW()');
-    console.log('✅ Conectado a Supabase con DATABASE_URL');
+    console.log('✅ Conectado a la Base de Datos con DATABASE_URL');
     return true;
   } catch (err) {
-    console.error('❌ Error de conexión:', err.message);
+    console.error('❌ Error de conexión a la Base de Datos:', err.message);
     throw err;
   }
 };

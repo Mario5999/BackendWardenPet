@@ -3,12 +3,12 @@ const express = require('express');
 const { initDB } = require('./config/database');
 
 // ── Importar rutas ────────────────────────────────────────────
-const authRoutes = require('./routes/auth.routes');
-const usersRoutes = require('./routes/users.routes');
-const petsRoutes = require('./routes/pets.routes');
-const remindersRoutes = require('./routes/reminders.routes');
-const healthRoutes = require('./routes/healthRecords.routes');
-const routinesRoutes = require('./routes/routines.routes');
+const authRoutes = require('./routes/auth.routes.js');
+const usersRoutes = require('./routes/users.routes.js');
+const petsRoutes = require('./routes/pets.routes.js');
+const remindersRoutes = require('./routes/reminders.routes.js');
+const healthRoutes = require('./routes/healthRecords.routes.js');
+const routinesRoutes = require('./routes/routines.routes.js');
 
 const app = express();
 
