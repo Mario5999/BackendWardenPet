@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════
 
 const jwt = require('jsonwebtoken');
-const pool = require('../config/database');
+const { pool } = require('../config/database');
 
 const authenticate = async (req, res, next) => {
   try {
